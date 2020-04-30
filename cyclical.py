@@ -32,7 +32,7 @@ def model(init_vals, params, t):
     alpha, beta1, beta2, beta3, gamma, m11, m21, m12, m22, rho, rho1, rho2, rho3, cap, zeta = params
     dt = t[1] - t[0]
     dist = False
-    changes = 0
+    points = []
     for k in t[1:]:
         # Check if the approximate infection load averaged over the past 7 days is greater than the threshold
         r_avg = np.mean(IY[-70:] + IO[-70:])
@@ -40,8 +40,8 @@ def model(init_vals, params, t):
         last_dist = dist
         dist = (r_avg > zeta)
         _rho = 1
-        if dist and not last_dist:
-            changes += 1
+        if dist != last_dist:
+            points.append(k)
         if dist:
             _rho = rho
         else:
@@ -81,16 +81,17 @@ def model(init_vals, params, t):
     print(mx)
     print(IY.index(mx) * 0.1)
     print(MY[-1] + MO[-1])
-    print(changes)
-#    return [np.stack([np.add(SY, SO), np.add(EY, EO), np.add(IY, IO), np.add(RY, RO), np.add(MY, MO), RA]).T, changes]
-    return [np.stack([np.add(EY, EO), np.add(IY, IO), np.add(MY, MO), RA]).T, changes]
+    return [np.stack([np.add(EY, EO), np.add(IY, IO), np.add(MY, MO), RA]).T, points]
 
 # Run simulation
 results = model(init_vals, params, t)
 # Plot results
 plt.figure(figsize=(12,8))
+#points = results[1]
+#plt.plot(np.subtract(points[1::2], points[::2]))
 plt.plot(results[0])
-#plt.legend(['Susceptible', 'Exposed', 'Infected', 'Recovered', 'Dead', 'Rolling AVG'])
+plt.ylabel('Percent of Population')
+plt.title('Application of Voluntary Cyclical Distancing')
 plt.legend(['Exposed', 'Infected', 'Dead', 'Rolling AVG'])
 plt.xlabel('Time Steps')
 plt.show()
